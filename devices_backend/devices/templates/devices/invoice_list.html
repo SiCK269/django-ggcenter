@@ -1,0 +1,88 @@
+
+<html lang="en">
+<head>
+{% load static %}
+{% load crispy_forms_tags %}
+
+<title>{% block title %}{{ settings.APP_NAME }}{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="{% static 'devices/css/main.css' %}">
+
+{% block head %} {% endblock %}
+
+</head>
+
+<body style="background-color: #333">
+    {% for img in logo %}
+        <img src="{{ img.img.url }}" alt="" style="border-radius: 150px"/>
+    {% endfor %}
+    <div class="container">
+
+      {% for inv in invoices %}
+      <div id="" class="draggable" draggable="true" style="height: 200px;">
+          <a href="{{ inv.get_absolute_url }}" target="_blank">
+        <div id="mydivheader">{{inv.name}} - {{ inv.invoice_type }}
+            <span>
+                {% for inv_dev in invoice_devices %} {%  if inv == inv_dev.invoice %} [ {{ inv_dev.device }} - {{ inv_dev.device.get_time_diff }} | {{ inv_dev.get_time_price }} - {{ inv_dev.device.get_time_name }}] {% endif %} {% endfor %}
+            </span>
+        </div>
+          <p>Refreshment:</p>
+              <span>{{ inv.get_refreshs }}</span><br><br>
+                <span>Total: {{ inv.get_total }} IQD</span>
+                  </a>
+      </div>
+      {% endfor %}
+    </div>
+      <div id="form" class="draggable" draggable="false">
+  <form method="POST" enctype="multipart/form-data" action="{% url 'gg:all' %}">
+      {% csrf_token %}
+      <br>
+            {{ form|crispy }}
+      <br>
+            <input type="submit" />
+        </form>
+    </div>
+</body>
+
+<script>
+  const draggables = document.querySelectorAll('.draggable')
+  const containers = document.querySelectorAll('.container')
+
+  draggables.forEach(draggable => {
+    draggable.addEventListener('dragstart', () => {
+      draggable.classList.add('dragging')
+    })
+
+    draggable.addEventListener('dragend', () => {
+      draggable.classList.remove('dragging')
+    })
+  })
+
+  containers.forEach(container => {
+    container.addEventListener('dragover', e => {
+      e.preventDefault()
+      const afterElement = getDragAfterElement(container, e.clientY)
+      const draggable = document.querySelector('.dragging')
+      if (afterElement == null) {
+        container.appendChild(draggable)
+      } else {
+        container.insertBefore(draggable, afterElement)
+      }
+    })
+  })
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')]
+
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect()
+      const offset = y - box.top - box.height / 2
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child }
+      } else {
+        return closest
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element
+  }
+</script>
+</html>
